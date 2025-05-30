@@ -25,12 +25,56 @@ async function run() {
 
 
         const JobsCollection = client.db('CareerCode').collection('jobs')
+        const ApplicationsCollection = client.db('CareerCode').collection('applications')
 
 
 
         app.get('/jobs', async (req, res) => {
             const cursor = JobsCollection.find()
             const result = await cursor.toArray()
+            res.send(result)
+        })
+        app.get('/jobs/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+
+            const result = await JobsCollection.findOne(query)
+            res.send(result)
+        })
+
+
+
+
+
+        app.get('/applications', async (req, res) => {
+            const email = req.query.email
+
+            const query = {
+                applicant: email
+            }
+
+            const result = await ApplicationsCollection.find(query).toArray()
+            
+            
+            for (const application of result) {
+                const jobID = application.jobID
+                const jobQuery = {_id: new ObjectId(jobID)}
+                const job = await JobsCollection.findOne(jobQuery)
+
+                application.company = job.company
+                application.company_logo = job.company_logo
+                application.title = job.title
+            }
+            
+            
+            res.send(result)
+        })
+
+
+
+        app.post('/applications', async (req, res) => {
+            const application = req.body
+            const result = await ApplicationsCollection.insertOne(application)
             res.send(result)
         })
 
