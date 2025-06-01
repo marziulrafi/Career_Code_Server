@@ -30,15 +30,33 @@ async function run() {
 
 
         app.get('/jobs', async (req, res) => {
-            const cursor = JobsCollection.find()
-            const result = await cursor.toArray()
-            res.send(result)
-        })
+
+            const email = req.query.email;
+            const query = {};
+            if (email) {
+                query.hr_email = email;
+            }
+
+            const cursor = JobsCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+
         app.get('/jobs/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: new ObjectId(id) }
 
             const result = await JobsCollection.findOne(query)
+            res.send(result)
+        })
+
+
+        app.post('/jobs', async (req, res) => {
+            const newJob = req.body
+            console.log(newJob)
+
+            const result = await JobsCollection.insertOne(newJob)
             res.send(result)
         })
 
@@ -54,22 +72,32 @@ async function run() {
             }
 
             const result = await ApplicationsCollection.find(query).toArray()
-            
-            
+
+
             for (const application of result) {
                 const jobID = application.jobID
-                const jobQuery = {_id: new ObjectId(jobID)}
+                const jobQuery = { _id: new ObjectId(jobID) }
                 const job = await JobsCollection.findOne(jobQuery)
 
                 application.company = job.company
                 application.company_logo = job.company_logo
                 application.title = job.title
             }
-            
-            
+
+
             res.send(result)
         })
 
+
+
+
+        app.get('/applications/job/:job_id', async(req, res) => {
+            const job_id = req.params.job_id
+            const query = {jobID : job_id}
+            const result = await ApplicationsCollection.find(query).toArray()
+
+            res.send(result)
+        })
 
 
         app.post('/applications', async (req, res) => {
